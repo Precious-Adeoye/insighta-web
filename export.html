@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insighta Labs+ - Export</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>🔍 Insighta Labs+</h1>
+        </div>
+        <nav>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/export.html" class="active">Export</a>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </nav>
+    </header>
+    
+    <main class="container">
+        <div class="filters-card">
+            <h3>📁 Export Profiles to CSV</h3>
+            <p class="info-text">Select filters below to export matching profiles. Maximum 10,000 records per export.</p>
+            
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Gender</label>
+                    <select id="gender">
+                        <option value="">All</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Age Group</label>
+                    <select id="ageGroup">
+                        <option value="">All</option>
+                        <option value="child">Child</option>
+                        <option value="teenager">Teenager</option>
+                        <option value="adult">Adult</option>
+                        <option value="senior">Senior</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Country</label>
+                    <select id="countryId">
+                        <option value="">All</option>
+                        <option value="NG">Nigeria</option>
+                        <option value="KE">Kenya</option>
+                        <option value="ZA">South Africa</option>
+                        <option value="TZ">Tanzania</option>
+                        <option value="UG">Uganda</option>
+                        <option value="ET">Ethiopia</option>
+                        <option value="GH">Ghana</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Min Age</label>
+                    <input type="number" id="minAge" placeholder="e.g., 18">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Max Age</label>
+                    <input type="number" id="maxAge" placeholder="e.g., 65">
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button id="previewBtn" class="btn-secondary">Preview Count</button>
+                <button id="exportBtn" class="btn-primary">📥 Download CSV</button>
+            </div>
+            
+            <div id="previewResult" class="preview-result"></div>
+        </div>
+    </main>
+    
+    <script src="js/config.js"></script>
+    <script src="js/export.js"></script>
+</body>
+</html>

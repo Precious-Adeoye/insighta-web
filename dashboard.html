@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insighta Labs+ - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>🔍 Insighta Labs+</h1>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="active">Dashboard</a>
+            <a href="/export.html">Export</a>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </nav>
+    </header>
+    
+    <main class="container">
+        <!-- Filters Section -->
+        <div class="filters-card">
+            <h3>🔎 Filter Profiles</h3>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Gender</label>
+                    <select id="gender">
+                        <option value="">All</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Age Group</label>
+                    <select id="ageGroup">
+                        <option value="">All</option>
+                        <option value="child">Child (0-12)</option>
+                        <option value="teenager">Teenager (13-19)</option>
+                        <option value="adult">Adult (20-64)</option>
+                        <option value="senior">Senior (65+)</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Country</label>
+                    <select id="countryId">
+                        <option value="">All Countries</option>
+                        <option value="NG">Nigeria</option>
+                        <option value="KE">Kenya</option>
+                        <option value="ZA">South Africa</option>
+                        <option value="TZ">Tanzania</option>
+                        <option value="UG">Uganda</option>
+                        <option value="ET">Ethiopia</option>
+                        <option value="GH">Ghana</option>
+                        <option value="AO">Angola</option>
+                        <option value="MA">Morocco</option>
+                        <option value="EG">Egypt</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Min Age</label>
+                    <input type="number" id="minAge" placeholder="e.g., 18">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Max Age</label>
+                    <input type="number" id="maxAge" placeholder="e.g., 65">
+                </div>
+                
+                <div class="filter-group full-width">
+                    <label>Natural Language Search</label>
+                    <input type="text" id="naturalSearch" placeholder="e.g., young males from nigeria, females above 30, adult from kenya">
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button id="searchBtn" class="btn-primary">🔍 Search</button>
+                <button id="resetBtn" class="btn-secondary">Reset Filters</button>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div class="results-card">
+            <div class="results-header">
+                <h3>📊 Results</h3>
+                <div class="results-info">
+                    <span id="resultCount"></span>
+                </div>
+            </div>
+            
+            <div id="results">
+                <div class="loading">Loading profile data...</div>
+            </div>
+            
+            <div id="pagination" class="pagination"></div>
+        </div>
+    </main>
+    
+    <script src="js/config.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
