@@ -50,23 +50,9 @@
             console.error('GitHub error:', error);
             window.location.href = '/index.html?error=login_failed';
         } else if (code) {
-            // Send code to backend
-            fetch(`${API_BASE_URL}/api/auth/github-callback?code=${code}`, {
-                method: 'GET',
-                credentials: 'include',
-                redirect: 'follow'
-            })
-            .then(response => {
-                if (response.ok || response.redirected) {
-                    window.location.href = '/dashboard.html';
-                } else {
-                    throw new Error('Login failed');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                window.location.href = '/index.html?error=login_failed';
-            });
+            // ✅ FIXED: Send code to the CORRECT endpoint (same URL, just with code param)
+            // The backend will process and redirect to dashboard with cookies set
+            window.location.href = `${API_BASE_URL}/callback.html?code=${code}`;
         } else {
             window.location.href = '/index.html?error=no_code';
         }

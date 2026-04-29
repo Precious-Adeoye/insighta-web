@@ -111,6 +111,11 @@
     
     <script src="js/config.js"></script>
     <script>
+         // Store the return URL after login
+        const returnUrl = window.location.pathname;
+        const loginUrl = `${API_BASE_URL}/api/auth/github-login?returnUrl=${encodeURIComponent(returnUrl)}`;
+        document.getElementById('loginBtn').href = loginUrl;
+
         // Check for error in URL
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');

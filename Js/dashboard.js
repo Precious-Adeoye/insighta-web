@@ -3,6 +3,43 @@ let currentPage = 1;
 const itemsPerPage = 20;
 let currentFilters = {};
 
+
+// Check if user is logged in
+function checkAuth() {
+    const token = localStorage.getItem('access_token');
+    
+    if (!token) {
+        // No token, redirect to login
+        window.location.href = '/index.html';
+        return null;
+    }
+    
+    return token;
+}
+
+// Get token on page load
+const accessToken = checkAuth();
+
+// Use token in API calls
+async function loadProfiles() {
+    const token = localStorage.getItem('access_token');
+    
+    const response = await fetch(`${API_BASE_URL}/api/v2/profiles?limit=10`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    
+    if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('access_token');
+        window.location.href = '/index.html';
+        return;
+    }
+    
+    // Process response...
+}
+
 // DOM Elements
 const resultsDiv = document.getElementById('results');
 const paginationDiv = document.getElementById('pagination');
