@@ -3,7 +3,7 @@
 // ==========================================
 
 // For local development with ngrok (backend)
-const API_BASE_URL = "https://braylee-argentiferous-soaringly.ngrok-free.dev/";
+const API_BASE_URL = "https://braylee-argentiferous-soaringly.ngrok-free.dev";
 
 // For Pxxl deployment (backend)
 // const API_BASE_URL = "https://your-backend.pxxl.click";
