@@ -178,6 +178,84 @@ function displayResults(data) {
     buildPagination(pagination);
 }
 
+// Get token from localStorage
+function getAccessToken() {
+    return localStorage.getItem('access_token');
+}
+
+// Check authentication on page load
+function checkAuth() {
+    const token = getAccessToken();
+    
+    if (!token) {
+        // No token, redirect to login
+        window.location.href = '/index.html';
+        return false;
+    }
+    return true;
+}
+
+// Use token in API calls
+async function loadProfiles() {
+    const token = getAccessToken();
+    
+    if (!token) {
+        window.location.href = '/index.html';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v2/profiles?limit=10`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            credentials: 'include'  // Also include cookies
+        });
+        
+        if (response.status === 401) {
+            // Token expired, try to refresh
+            const refreshed = await refreshToken();
+            if (!refreshed) {
+                localStorage.removeItem('access_token');
+                window.location.href = '/index.html';
+                return;
+            }
+            // Retry with new token
+            return loadProfiles();
+        }
+        
+        const data = await response.json();
+        displayProfiles(data);
+        
+    } catch (error) {
+        console.error('Error loading profiles:', error);
+        document.getElementById('results').innerHTML = '<div class="error">Failed to load profiles</div>';
+    }
+}
+
+// Refresh token function
+async function refreshToken() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('access_token', data.access_token);
+            return true;
+        }
+        return false;
+    } catch (error) {
+        return false;
+    }
+}
+
+// Call checkAuth on page load
+checkAuth();
+loadProfiles();
+
 // Build pagination controls
 function buildPagination(pagination) {
     if (!pagination || pagination.total_pages <= 1) {
