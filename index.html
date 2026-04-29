@@ -110,6 +110,16 @@
     </div>
     
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+    // Check if already logged in
+    if (isAuthenticated()) {
+        window.location.href = '/dashboard.html';
+    }
+    
+    // Login button
+    document.getElementById('loginBtn')?.addEventListener('click', login);
+</script>
     <script>
          // Store the return URL after login
         const returnUrl = window.location.pathname;

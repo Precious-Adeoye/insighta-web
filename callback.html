@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logging in...</title>
+    <script src="js/auth.js"></script>
+    <script>
+        // Initialize auth (captures token from URL if present)
+        initAuth();
+        
+        // If we have a token, go to dashboard
+        if (isAuthenticated()) {
+            window.location.href = '/dashboard.html';
+        } else {
+            // No token, go back to login
+            window.location.href = '/index.html?error=no_token';
+        }
+    </script>
     <style>
         body {
             font-family: system-ui, sans-serif;
