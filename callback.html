@@ -52,23 +52,8 @@
         <p>Please wait while we complete authentication.</p>
     </div>
     
-    <script src="js/config.js"></script>
-    <script>
-        // Get the code from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const error = urlParams.get('error');
-        
-        if (error) {
-            console.error('GitHub error:', error);
-            window.location.href = '/index.html?error=login_failed';
-        } else if (code) {
-            // ✅ FIXED: Send code to the CORRECT endpoint (same URL, just with code param)
-            // The backend will process and redirect to dashboard with cookies set
-            window.location.href = `${API_BASE_URL}/callback.html?code=${code}`;
-        } else {
-            window.location.href = '/index.html?error=no_code';
-        }
-    </script>
+    <!-- NOTE: Backend handles the OAuth code exchange at /callback.html?code=...
+         The backend will redirect us to /dashboard.html?access_token=... with the token.
+         This frontend callback.html is just a loading screen. -->
 </body>
 </html>

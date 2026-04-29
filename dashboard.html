@@ -114,30 +114,18 @@
     </main>
     
     <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
     <script>
-    // Initialize auth (captures token from URL)
-    initAuth();
-    
-    // Require authentication
-    if (!isAuthenticated()) {
+    // Logout button handler
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
         window.location.href = '/index.html';
-    }
+    });
     
-    // Your dashboard code here...
-    async function loadProfiles() {
-        const response = await apiCall('/api/v2/profiles?limit=20');
-        if (response.ok) {
-            const data = await response.json();
-            // Display profiles...
-        }
-    }
-    
+    // Load profiles on page load
+    console.log('[Dashboard] Page loaded, starting to load profiles');
     loadProfiles();
-    
-    // Logout button
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
 </script>
 </body>
 </html>

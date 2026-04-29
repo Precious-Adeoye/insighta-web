@@ -1,125 +1,88 @@
 // ============================================
-// TOKEN CAPTURE - MUST BE FIRST
+// STATE MANAGEMENT
 // ============================================
-(function captureToken() {
+let currentPage = 1;
+const itemsPerPage = 20;
+let currentFilters = {};
+
+// DOM Elements (set after page loads)
+let resultsDiv;
+let paginationDiv;
+let resultCountSpan;
+let logoutBtn;
+let searchBtn;
+let resetBtn;
+let naturalSearchInput;
+let genderFilter;
+let ageGroupFilter;
+let countryFilter;
+let minAgeFilter;
+let maxAgeFilter;
+
+// ============================================
+// TOKEN CAPTURE - MUST RUN FIRST
+// ============================================
+(function captureTokenFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('access_token');
     
     if (urlToken) {
-        console.log('Token captured from URL');
+        console.log('[Auth] Token captured from URL');
         localStorage.setItem('access_token', urlToken);
         
-        // Remove token from URL without page refresh
+        // Remove token from URL for security (don't refresh page)
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
     }
 })();
 
 // ============================================
-// TOKEN CHECK - Run after capture
+// AUTHENTICATION HELPERS
 // ============================================
 function getAccessToken() {
     return localStorage.getItem('access_token');
 }
 
-function checkAuth() {
+function isUserAuthenticated() {
     const token = getAccessToken();
-    
     if (!token) {
-        console.log('No token found, redirecting to login');
-        window.location.href = '/index.html';
+        console.log('[Auth] No token found - redirecting to login');
         return false;
     }
-    
-    console.log('Token found, user is authenticated');
+    console.log('[Auth] Token found - user is authenticated');
     return true;
 }
 
-// ============================================
-// REST OF YOUR DASHBOARD CODE
-// ============================================
+function redirectToLogin(reason) {
+    console.log('[Auth] Redirecting to login. Reason:', reason);
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    window.location.href = '/index.html';
+}
 
-// Check authentication immediately
-if (!checkAuth()) {
-    // The redirect will happen, so stop execution
+// ============================================
+// REQUIRE AUTHENTICATION BEFORE LOADING
+// ============================================
+if (!isUserAuthenticated()) {
+    redirectToLogin('No token on page load');
     throw new Error('Not authenticated');
 }
 
-// Continue with loading profiles...
-async function loadProfiles() {
-    const token = getAccessToken();
-    console.log('Loading profiles with token:', token ? 'Yes' : 'No');
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-// State
-let currentPage = 1;
-const itemsPerPage = 20;
-let currentFilters = {};
-
-
-// Check if user is logged in
-function checkAuth() {
-    const token = localStorage.getItem('access_token');
-    
-    if (!token) {
-        // No token, redirect to login
-        window.location.href = '/index.html';
-        return null;
-    }
-    
-    return token;
-}
-
-// Get token on page load
-const accessToken = checkAuth();
-
-// Use token in API calls
-async function loadProfiles() {
-    const token = localStorage.getItem('access_token');
-    
-    const response = await fetch(`${API_BASE_URL}/api/v2/profiles?limit=10`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    
-    if (response.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('access_token');
-        window.location.href = '/index.html';
-        return;
-    }
-    
-    // Process response...
-}
-
-// DOM Elements
-const resultsDiv = document.getElementById('results');
-const paginationDiv = document.getElementById('pagination');
-const resultCountSpan = document.getElementById('resultCount');
-
-// Helper: Get user ID from cookie (simple)
 function getUserId() {
     const match = document.cookie.match(/user_id=([^;]+)/);
     return match ? match[1] : null;
 }
 
-// Helper: Check if authenticated
-async function checkAuth() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/v2/profiles?limit=1`, {
-            credentials: 'include'
-        });
-        if (response.status === 401) {
-            window.location.href = '/index.html';
-        }
-    } catch (err) {
-        console.error('Auth check failed:', err);
-        window.location.href = '/index.html';
-    }
-}
-
-// Build query string from filters
 function buildQueryString() {
     const params = new URLSearchParams();
     params.append('page', currentPage);
@@ -134,18 +97,45 @@ function buildQueryString() {
     return params.toString();
 }
 
-// Load profiles with current filters
+function getFilters() {
+    return {
+        gender: genderFilter?.value || '',
+        age_group: ageGroupFilter?.value || '',
+        country_id: countryFilter?.value || '',
+        min_age: minAgeFilter?.value || '',
+        max_age: maxAgeFilter?.value || ''
+    };
+}
+
+// ============================================
+// LOAD PROFILES
+// ============================================
 async function loadProfiles() {
+    const token = getAccessToken();
+    
+    if (!token) {
+        redirectToLogin('Token missing during loadProfiles');
+        return;
+    }
+    
     resultsDiv.innerHTML = '<div class="loading">Loading profile data...</div>';
     
     const queryString = buildQueryString();
     const url = `${API_BASE_URL}/api/v2/profiles?${queryString}`;
     
+    console.log('[API] Loading profiles:', url);
+    
     try {
-        const response = await fetch(url, { credentials: 'include' });
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            credentials: 'include'
+        });
         
         if (response.status === 401) {
-            window.location.href = '/index.html';
+            console.error('[API] 401 Unauthorized - token may be invalid');
+            redirectToLogin('401 from API');
             return;
         }
         
@@ -154,36 +144,55 @@ async function loadProfiles() {
         }
         
         const data = await response.json();
+        console.log('[API] Profiles loaded successfully');
         displayResults(data);
     } catch (err) {
-        console.error('Error loading profiles:', err);
+        console.error('[API] Error loading profiles:', err);
         resultsDiv.innerHTML = '<div class="empty-state">❌ Failed to load profiles. Please try again.</div>';
     }
 }
 
-// Handle natural language search
+// ============================================
+// SEARCH PROFILES
+// ============================================
 async function searchNatural(query) {
+    const token = getAccessToken();
+    
+    if (!token) {
+        redirectToLogin('Token missing during search');
+        return;
+    }
+    
     resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
     
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v2/profiles/search?q=${encodeURIComponent(query)}&page=${currentPage}&limit=${itemsPerPage}`, {
+        const url = `${API_BASE_URL}/api/v2/profiles/search?q=${encodeURIComponent(query)}&page=${currentPage}&limit=${itemsPerPage}`;
+        console.log('[API] Natural search:', url);
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
             credentials: 'include'
         });
         
         if (response.status === 401) {
-            window.location.href = '/index.html';
+            redirectToLogin('401 from search API');
             return;
         }
         
         const data = await response.json();
+        console.log('[API] Search completed');
         displayResults(data);
     } catch (err) {
-        console.error('Search error:', err);
+        console.error('[API] Search error:', err);
         resultsDiv.innerHTML = '<div class="empty-state">❌ Search failed. Please try again.</div>';
     }
 }
 
-// Display results in table
+// ============================================
+// DISPLAY RESULTS
+// ============================================
 function displayResults(data) {
     if (!data.data || !data.data.items || data.data.items.length === 0) {
         resultsDiv.innerHTML = '<div class="empty-state">No profiles found matching your criteria.</div>';
@@ -231,85 +240,9 @@ function displayResults(data) {
     buildPagination(pagination);
 }
 
-// Get token from localStorage
-function getAccessToken() {
-    return localStorage.getItem('access_token');
-}
-
-// Check authentication on page load
-function checkAuth() {
-    const token = getAccessToken();
-    
-    if (!token) {
-        // No token, redirect to login
-        window.location.href = '/index.html';
-        return false;
-    }
-    return true;
-}
-
-// Use token in API calls
-async function loadProfiles() {
-    const token = getAccessToken();
-    
-    if (!token) {
-        window.location.href = '/index.html';
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/v2/profiles?limit=10`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include'  // Also include cookies
-        });
-        
-        if (response.status === 401) {
-            // Token expired, try to refresh
-            const refreshed = await refreshToken();
-            if (!refreshed) {
-                localStorage.removeItem('access_token');
-                window.location.href = '/index.html';
-                return;
-            }
-            // Retry with new token
-            return loadProfiles();
-        }
-        
-        const data = await response.json();
-        displayProfiles(data);
-        
-    } catch (error) {
-        console.error('Error loading profiles:', error);
-        document.getElementById('results').innerHTML = '<div class="error">Failed to load profiles</div>';
-    }
-}
-
-// Refresh token function
-async function refreshToken() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include'
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);
-            return true;
-        }
-        return false;
-    } catch (error) {
-        return false;
-    }
-}
-
-// Call checkAuth on page load
-checkAuth();
-loadProfiles();
-
-// Build pagination controls
+// ============================================
+// PAGINATION
+// ============================================
 function buildPagination(pagination) {
     if (!pagination || pagination.total_pages <= 1) {
         paginationDiv.innerHTML = '';
@@ -330,7 +263,7 @@ function buildPagination(pagination) {
     
     paginationDiv.innerHTML = html;
     
-    // Add event listeners
+    // Add event listeners to pagination buttons
     document.querySelectorAll('.page-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             currentPage = parseInt(btn.dataset.page);
@@ -339,42 +272,11 @@ function buildPagination(pagination) {
     });
 }
 
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Get current filter values
-function getFilters() {
-    return {
-        gender: document.getElementById('gender').value,
-        age_group: document.getElementById('ageGroup').value,
-        country_id: document.getElementById('countryId').value,
-        min_age: document.getElementById('minAge').value,
-        max_age: document.getElementById('maxAge').value
-    };
-}
-
-// Reset all filters
-function resetFilters() {
-    document.getElementById('gender').value = '';
-    document.getElementById('ageGroup').value = '';
-    document.getElementById('countryId').value = '';
-    document.getElementById('minAge').value = '';
-    document.getElementById('maxAge').value = '';
-    document.getElementById('naturalSearch').value = '';
-    
-    currentFilters = {};
-    currentPage = 1;
-    loadProfiles();
-}
-
-// Handle search button click
+// ============================================
+// FILTER HANDLERS
+// ============================================
 function handleSearch() {
-    const naturalQuery = document.getElementById('naturalSearch').value.trim();
+    const naturalQuery = naturalSearchInput?.value.trim() || '';
     
     if (naturalQuery) {
         // Natural language search
@@ -389,7 +291,22 @@ function handleSearch() {
     }
 }
 
-// Logout
+function resetFilters() {
+    if (genderFilter) genderFilter.value = '';
+    if (ageGroupFilter) ageGroupFilter.value = '';
+    if (countryFilter) countryFilter.value = '';
+    if (minAgeFilter) minAgeFilter.value = '';
+    if (maxAgeFilter) maxAgeFilter.value = '';
+    if (naturalSearchInput) naturalSearchInput.value = '';
+    
+    currentFilters = {};
+    currentPage = 1;
+    loadProfiles();
+}
+
+// ============================================
+// LOGOUT
+// ============================================
 async function logout() {
     try {
         await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -399,19 +316,70 @@ async function logout() {
     } catch (err) {
         console.error('Logout error:', err);
     }
+    
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
     window.location.href = '/index.html';
 }
 
-// Event Listeners
-document.getElementById('searchBtn').addEventListener('click', handleSearch);
-document.getElementById('resetBtn').addEventListener('click', resetFilters);
-document.getElementById('logoutBtn').addEventListener('click', logout);
+// ============================================
+// REFRESH TOKEN (if needed)
+// ============================================
+async function refreshToken() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('access_token', data.access_token);
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+        return false;
+    }
+}
 
-// Enter key in natural search
-document.getElementById('naturalSearch').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleSearch();
-});
+// ============================================
+// INITIALIZE ON PAGE LOAD
+// ============================================
+function initializeDashboard() {
+    console.log('[Dashboard] Initializing...');
+    
+    // Get all DOM elements
+    resultsDiv = document.getElementById('results');
+    paginationDiv = document.getElementById('pagination');
+    resultCountSpan = document.getElementById('resultCount');
+    logoutBtn = document.getElementById('logoutBtn');
+    searchBtn = document.getElementById('searchBtn');
+    resetBtn = document.getElementById('resetBtn');
+    naturalSearchInput = document.getElementById('naturalSearch');
+    genderFilter = document.getElementById('gender');
+    ageGroupFilter = document.getElementById('ageGroup');
+    countryFilter = document.getElementById('countryId');
+    minAgeFilter = document.getElementById('minAge');
+    maxAgeFilter = document.getElementById('maxAge');
+    
+    // Attach event listeners
+    if (searchBtn) searchBtn.addEventListener('click', handleSearch);
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    if (naturalSearchInput) naturalSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSearch();
+    });
+    
+    // Load initial profiles
+    console.log('[Dashboard] Loading initial profiles');
+    loadProfiles();
+}
 
-// Initial load
-checkAuth();
-loadProfiles();
+// Wait for DOM to be ready, then initialize
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDashboard);
+} else {
+    initializeDashboard();
+}
