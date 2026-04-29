@@ -1,3 +1,56 @@
+// ============================================
+// TOKEN CAPTURE - MUST BE FIRST
+// ============================================
+(function captureToken() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('access_token');
+    
+    if (urlToken) {
+        console.log('Token captured from URL');
+        localStorage.setItem('access_token', urlToken);
+        
+        // Remove token from URL without page refresh
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+})();
+
+// ============================================
+// TOKEN CHECK - Run after capture
+// ============================================
+function getAccessToken() {
+    return localStorage.getItem('access_token');
+}
+
+function checkAuth() {
+    const token = getAccessToken();
+    
+    if (!token) {
+        console.log('No token found, redirecting to login');
+        window.location.href = '/index.html';
+        return false;
+    }
+    
+    console.log('Token found, user is authenticated');
+    return true;
+}
+
+// ============================================
+// REST OF YOUR DASHBOARD CODE
+// ============================================
+
+// Check authentication immediately
+if (!checkAuth()) {
+    // The redirect will happen, so stop execution
+    throw new Error('Not authenticated');
+}
+
+// Continue with loading profiles...
+async function loadProfiles() {
+    const token = getAccessToken();
+    console.log('Loading profiles with token:', token ? 'Yes' : 'No');
+}
+
 // State
 let currentPage = 1;
 const itemsPerPage = 20;

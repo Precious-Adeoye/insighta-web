@@ -8,6 +8,20 @@
 </head>
 <body>
     <header>
+        <script>
+    // Capture token from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('access_token');
+    
+    if (urlToken) {
+        // Save token to localStorage
+        localStorage.setItem('access_token', urlToken);
+        
+        // Remove token from URL without refreshing
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+</script>
         <div class="logo">
             <h1>🔍 Insighta Labs+</h1>
         </div>
@@ -98,20 +112,7 @@
             <div id="pagination" class="pagination"></div>
         </div>
     </main>
-    <script>
-    // Capture token from URL if present
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get('access_token');
     
-    if (urlToken) {
-        // Save token to localStorage
-        localStorage.setItem('access_token', urlToken);
-        
-        // Remove token from URL without refreshing
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-    }
-</script>
     <script src="js/config.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
