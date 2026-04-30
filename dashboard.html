@@ -7,31 +7,31 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <div id="results"></div>
-        <div id="pagination"></div>
-        <script>
-    // Capture token from URL if present
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get('access_token');
-    
-    if (urlToken) {
-        // Save token to localStorage
-        localStorage.setItem('access_token', urlToken);
+     <header>
+        <!-- <div id="results"></div>
+        <div id="pagination"></div> -->
+        <script> 
+        // Capture token from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('access_token');
         
-        // Remove token from URL without refreshing
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-    }
-</script>
-        <div class="logo">
-            <h1>🔍 Insighta Labs+</h1>
-        </div>
-        <nav>
-            <a href="/dashboard.html" class="active">Dashboard</a>
-            <a href="/export.html">Export</a>
-            <button id="logoutBtn" class="logout-btn">Logout</button>
-        </nav>
+        if (urlToken) {
+            // Save token to localStorage
+            localStorage.setItem('access_token', urlToken);
+            
+            // Remove token from URL without refreshing
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    </script>
+            <div class="logo">
+                <h1>🔍 Insighta Labs+</h1>
+            </div>
+            <nav>
+                <a href="/dashboard.html" class="active">Dashboard</a>
+                <a href="/export.html">Export</a>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </nav>
     </header>
     
     <main class="container">
