@@ -123,7 +123,8 @@ async function loadProfiles() {
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
             }
             // ✅ REMOVED credentials: 'include' - this fixes CORS
         });
@@ -166,7 +167,8 @@ async function searchNatural(query) {
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
             }
             // ✅ REMOVED credentials: 'include'
         });

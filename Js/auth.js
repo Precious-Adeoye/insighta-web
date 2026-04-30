@@ -96,7 +96,10 @@ async function logout() {
     try {
         await fetch(`${API_BASE_URL}/api/auth/logout`, {
             method: 'POST',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+                'ngrok-skip-browser-warning': 'true'   
+            }
         });
     } catch (e) {
         console.error('Logout error:', e);
