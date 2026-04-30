@@ -48,10 +48,10 @@
                     <label>Age Group</label>
                     <select id="ageGroup">
                         <option value="">All</option>
-                        <option value="child">Child (0-12)</option>
-                        <option value="teenager">Teenager (13-19)</option>
-                        <option value="adult">Adult (20-64)</option>
-                        <option value="senior">Senior (65+)</option>
+                        <option value="child">Child</option>
+                        <option value="teenager">Teenager</option>
+                        <option value="adult">Adult</option>
+                        <option value="senior">Senior</option>
                     </select>
                 </div>
                 
@@ -66,9 +66,6 @@
                         <option value="UG">Uganda</option>
                         <option value="ET">Ethiopia</option>
                         <option value="GH">Ghana</option>
-                        <option value="AO">Angola</option>
-                        <option value="MA">Morocco</option>
-                        <option value="EG">Egypt</option>
                     </select>
                 </div>
                 
@@ -84,7 +81,7 @@
                 
                 <div class="filter-group full-width">
                     <label>Natural Language Search</label>
-                    <input type="text" id="naturalSearch" placeholder="e.g., young males from nigeria, females above 30, adult from kenya">
+                    <input type="text" id="naturalSearch" placeholder="e.g., young males from nigeria">
                 </div>
             </div>
             
@@ -113,29 +110,6 @@
     
     <script src="js/config.js"></script>
     <script src="js/dashboard.js"></script>
-    
-    <!-- ✅ Separate script for logout and initialization -->
-    <script>
-        // Logout button handler
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('user');
-                window.location.href = '/index.html';
-            });
-        }
-        
-        // Initialize dashboard after scripts load
-        if (typeof initializeDashboard === 'function') {
-            initializeDashboard();
-        } else {
-            console.log('[Dashboard] Waiting for dashboard.js to load...');
-            // Fallback: load profiles directly if initializeDashboard doesn't exist
-            if (typeof loadProfiles === 'function') {
-                loadProfiles();
-            }
-        }
-    </script>
+    <!-- dashboard.js handles everything - no extra code needed -->
 </body>
 </html>
