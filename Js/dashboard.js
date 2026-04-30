@@ -190,6 +190,9 @@ async function searchNatural(query) {
 // ============================================
 // DISPLAY RESULTS
 // ============================================
+f// ============================================
+// DISPLAY RESULTS - FIXED TABLE HEADERS
+// ============================================
 function displayResults(data) {
     if (!data.data || !data.data.items || data.data.items.length === 0) {
         if (resultsDiv) resultsDiv.innerHTML = '<div class="empty-state">No profiles found matching your criteria.</div>';
@@ -201,18 +204,25 @@ function displayResults(data) {
     const items = data.data.items;
     const pagination = data.data.pagination;
     
+    // Update result count
     if (resultCountSpan) {
         resultCountSpan.textContent = `${pagination.total_items} profiles found`;
     }
     
-    let html = '<div class="table-wrapper"><tr><thead><tr>';
+    // ✅ FIXED: Build table with PROPER HEADERS
+    let html = '<div class="table-wrapper">';
+    html += '<table class="profiles-table">';
+    html += '<thead>';
+    html += '<tr>';
     html += '<th>Name</th>';
     html += '<th>Gender</th>';
     html += '<th>Age</th>';
     html += '<th>Age Group</th>';
     html += '<th>Country</th>';
     html += '<th>Confidence</th>';
-    html += '</tr></thead><tbody>';
+    html += '</tr>';
+    html += '</thead>';
+    html += '<tbody>';
     
     items.forEach(profile => {
         const genderIcon = profile.gender === 'male' ? '👨' : '👩';
@@ -228,9 +238,13 @@ function displayResults(data) {
         </tr>`;
     });
     
-    html += '</tbody></table></div>';
+    html += '</tbody>';
+    html += '</table>';
+    html += '</div>';
+    
     if (resultsDiv) resultsDiv.innerHTML = html;
     
+    // Build pagination
     buildPagination(pagination);
 }
 
