@@ -5,7 +5,7 @@ let currentPage = 1;
 const itemsPerPage = 20;
 let currentFilters = {};
 
-// DOM Elements (set after page loads)
+// DOM Elements
 let resultsDiv;
 let paginationDiv;
 let resultCountSpan;
@@ -30,7 +30,7 @@ let maxAgeFilter;
         console.log('[Auth] Token captured from URL');
         localStorage.setItem('access_token', urlToken);
         
-        // Remove token from URL for security (don't refresh page)
+        // Remove token from URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -46,22 +46,21 @@ function getAccessToken() {
 function isUserAuthenticated() {
     const token = getAccessToken();
     if (!token) {
-        console.log('[Auth] No token found - redirecting to login');
+        console.log('[Auth] No token found');
         return false;
     }
-    console.log('[Auth] Token found - user is authenticated');
+    console.log('[Auth] Token found');
     return true;
 }
 
 function redirectToLogin(reason) {
-    console.log('[Auth] Redirecting to login. Reason:', reason);
+    console.log('[Auth] Redirecting to login:', reason);
     localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
     window.location.href = '/index.html';
 }
 
 // ============================================
-// REQUIRE AUTHENTICATION BEFORE LOADING
+// REQUIRE AUTHENTICATION
 // ============================================
 if (!isUserAuthenticated()) {
     redirectToLogin('No token on page load');
@@ -76,11 +75,6 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-function getUserId() {
-    const match = document.cookie.match(/user_id=([^;]+)/);
-    return match ? match[1] : null;
 }
 
 function buildQueryString() {
@@ -108,17 +102,17 @@ function getFilters() {
 }
 
 // ============================================
-// LOAD PROFILES
+// LOAD PROFILES - NO credentials: 'include'
 // ============================================
 async function loadProfiles() {
     const token = getAccessToken();
     
     if (!token) {
-        redirectToLogin('Token missing during loadProfiles');
+        redirectToLogin('Token missing');
         return;
     }
     
-    resultsDiv.innerHTML = '<div class="loading">Loading profile data...</div>';
+    if (resultsDiv) resultsDiv.innerHTML = '<div class="loading">Loading profile data...</div>';
     
     const queryString = buildQueryString();
     const url = `${API_BASE_URL}/api/v2/profiles?${queryString}`;
@@ -128,13 +122,13 @@ async function loadProfiles() {
     try {
         const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include'
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+            // ✅ REMOVED credentials: 'include' - this fixes CORS
         });
         
         if (response.status === 401) {
-            console.error('[API] 401 Unauthorized - token may be invalid');
             redirectToLogin('401 from API');
             return;
         }
@@ -148,22 +142,22 @@ async function loadProfiles() {
         displayResults(data);
     } catch (err) {
         console.error('[API] Error loading profiles:', err);
-        resultsDiv.innerHTML = '<div class="empty-state">❌ Failed to load profiles. Please try again.</div>';
+        if (resultsDiv) resultsDiv.innerHTML = '<div class="empty-state">❌ Failed to load profiles. Please try again.</div>';
     }
 }
 
 // ============================================
-// SEARCH PROFILES
+// SEARCH PROFILES - NO credentials: 'include'
 // ============================================
 async function searchNatural(query) {
     const token = getAccessToken();
     
     if (!token) {
-        redirectToLogin('Token missing during search');
+        redirectToLogin('Token missing');
         return;
     }
     
-    resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+    if (resultsDiv) resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
     
     try {
         const url = `${API_BASE_URL}/api/v2/profiles/search?q=${encodeURIComponent(query)}&page=${currentPage}&limit=${itemsPerPage}`;
@@ -171,13 +165,14 @@ async function searchNatural(query) {
         
         const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include'
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+            // ✅ REMOVED credentials: 'include'
         });
         
         if (response.status === 401) {
-            redirectToLogin('401 from search API');
+            redirectToLogin('401 from search');
             return;
         }
         
@@ -186,7 +181,7 @@ async function searchNatural(query) {
         displayResults(data);
     } catch (err) {
         console.error('[API] Search error:', err);
-        resultsDiv.innerHTML = '<div class="empty-state">❌ Search failed. Please try again.</div>';
+        if (resultsDiv) resultsDiv.innerHTML = '<div class="empty-state">❌ Search failed. Please try again.</div>';
     }
 }
 
@@ -195,8 +190,8 @@ async function searchNatural(query) {
 // ============================================
 function displayResults(data) {
     if (!data.data || !data.data.items || data.data.items.length === 0) {
-        resultsDiv.innerHTML = '<div class="empty-state">No profiles found matching your criteria.</div>';
-        paginationDiv.innerHTML = '';
+        if (resultsDiv) resultsDiv.innerHTML = '<div class="empty-state">No profiles found matching your criteria.</div>';
+        if (paginationDiv) paginationDiv.innerHTML = '';
         if (resultCountSpan) resultCountSpan.textContent = '0 profiles';
         return;
     }
@@ -204,13 +199,11 @@ function displayResults(data) {
     const items = data.data.items;
     const pagination = data.data.pagination;
     
-    // Update result count
     if (resultCountSpan) {
         resultCountSpan.textContent = `${pagination.total_items} profiles found`;
     }
     
-    // Build table
-    let html = '<div class="table-wrapper"><table><thead><tr>';
+    let html = '<div class="table-wrapper"><tr><thead><tr>';
     html += '<th>Name</th>';
     html += '<th>Gender</th>';
     html += '<th>Age</th>';
@@ -234,9 +227,8 @@ function displayResults(data) {
     });
     
     html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    if (resultsDiv) resultsDiv.innerHTML = html;
     
-    // Build pagination
     buildPagination(pagination);
 }
 
@@ -245,7 +237,7 @@ function displayResults(data) {
 // ============================================
 function buildPagination(pagination) {
     if (!pagination || pagination.total_pages <= 1) {
-        paginationDiv.innerHTML = '';
+        if (paginationDiv) paginationDiv.innerHTML = '';
         return;
     }
     
@@ -261,9 +253,8 @@ function buildPagination(pagination) {
         html += `<button class="page-btn" data-page="${pagination.next_page}">Next →</button>`;
     }
     
-    paginationDiv.innerHTML = html;
+    if (paginationDiv) paginationDiv.innerHTML = html;
     
-    // Add event listeners to pagination buttons
     document.querySelectorAll('.page-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             currentPage = parseInt(btn.dataset.page);
@@ -279,12 +270,10 @@ function handleSearch() {
     const naturalQuery = naturalSearchInput?.value.trim() || '';
     
     if (naturalQuery) {
-        // Natural language search
         currentFilters = {};
         currentPage = 1;
         searchNatural(naturalQuery);
     } else {
-        // Regular filters
         currentFilters = getFilters();
         currentPage = 1;
         loadProfiles();
@@ -305,43 +294,20 @@ function resetFilters() {
 }
 
 // ============================================
-// LOGOUT
+// LOGOUT - NO credentials: 'include'
 // ============================================
 async function logout() {
     try {
         await fetch(`${API_BASE_URL}/api/auth/logout`, {
-            method: 'POST',
-            credentials: 'include'
+            method: 'POST'
+            // ✅ REMOVED credentials: 'include'
         });
     } catch (err) {
         console.error('Logout error:', err);
     }
     
     localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
     window.location.href = '/index.html';
-}
-
-// ============================================
-// REFRESH TOKEN (if needed)
-// ============================================
-async function refreshToken() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include'
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error('Token refresh failed:', error);
-        return false;
-    }
 }
 
 // ============================================
@@ -350,7 +316,7 @@ async function refreshToken() {
 function initializeDashboard() {
     console.log('[Dashboard] Initializing...');
     
-    // Get all DOM elements
+    // Get DOM elements
     resultsDiv = document.getElementById('results');
     paginationDiv = document.getElementById('pagination');
     resultCountSpan = document.getElementById('resultCount');
@@ -368,16 +334,18 @@ function initializeDashboard() {
     if (searchBtn) searchBtn.addEventListener('click', handleSearch);
     if (resetBtn) resetBtn.addEventListener('click', resetFilters);
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
-    if (naturalSearchInput) naturalSearchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleSearch();
-    });
+    if (naturalSearchInput) {
+        naturalSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
+    }
     
     // Load initial profiles
     console.log('[Dashboard] Loading initial profiles');
     loadProfiles();
 }
 
-// Wait for DOM to be ready, then initialize
+// Start when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeDashboard);
 } else {
